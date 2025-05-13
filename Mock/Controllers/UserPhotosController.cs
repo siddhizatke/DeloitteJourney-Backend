@@ -4,6 +4,8 @@ using Microsoft.EntityFrameworkCore;
 using Mock.Data;
 using Mock.Model;
 using Mock.Repository;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace Mock.Controllers
 {
@@ -14,6 +16,7 @@ namespace Mock.Controllers
         private readonly ApplicationDbContext _context;
         private readonly IFileService _fileService;
 
+        // Constructor to initialize the UserPhotosController with database context and file service
         public UserPhotosController(ApplicationDbContext context, IFileService fileService)
         {
             _context = context;
@@ -21,6 +24,7 @@ namespace Mock.Controllers
         }
 
         // GET: api/userphoto
+        // Retrieves a list of all user photos from the database
         [HttpGet]
         public async Task<ActionResult<IEnumerable<UserPhoto>>> GetPhotos()
         {
@@ -28,20 +32,19 @@ namespace Mock.Controllers
         }
 
         // POST: api/userphoto
+        // Adds a new user photo to the database
         [HttpPost]
         public async Task<ActionResult<UserPhoto>> PostPhoto([FromForm] UserPhotoDto photo)
         {
-            
             var userphoto = new UserPhoto
             {
                 PhotoUrl = string.Empty, // Initialize required property
             };
 
-            if (userphoto.PhotoUrl != null)
+            if (photo.PhotoUrl != null)
             {
                 userphoto.PhotoUrl = await _fileService.UploadFileAsync(photo.PhotoUrl, "Photos/UserPhotos");
             }
-            
 
             _context.UserPhotos.Add(userphoto);
             await _context.SaveChangesAsync();
@@ -50,6 +53,7 @@ namespace Mock.Controllers
         }
 
         // DELETE: api/userphoto/{photoId}
+        // Deletes a user photo from the database by ID
         [HttpDelete("{photoId}")]
         public async Task<IActionResult> DeletePhoto(int photoId)
         {

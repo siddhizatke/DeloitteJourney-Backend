@@ -17,18 +17,23 @@ namespace Mock.Controllers
         private readonly ApplicationDbContext _context;
         private readonly IFileService _fileService;
 
+        // Constructor to initialize the TeamSelfiesController with database context and file service
         public TeamSelfiesController(ApplicationDbContext context, IFileService fileService)
         {
             _context = context;
             _fileService = fileService;
         }
 
+        // GET: api/TeamSelfies
+        // Retrieves a list of all team selfies from the database
         [HttpGet]
         public async Task<ActionResult<IEnumerable<TeamSelfiesModel>>> GetProjectTeamSelfies()
         {
             return await _context.TeamSelfies.ToListAsync();
         }
 
+        // GET: api/TeamSelfies/{id}
+        // Retrieves a specific team selfie by ID
         [HttpGet("{id}")]
         public async Task<ActionResult<TeamSelfiesModel>> GetProjectTeamSelfie(int id)
         {
@@ -42,6 +47,8 @@ namespace Mock.Controllers
             return selfie;
         }
 
+        // POST: api/TeamSelfies
+        // Adds a new team selfie to the database
         [HttpPost]
         public async Task<ActionResult<TeamSelfiesModel>> PostProjectTeamSelfie([FromForm] TeamSelfieUploadDto selfieDto)
         {
@@ -75,6 +82,8 @@ namespace Mock.Controllers
             return CreatedAtAction(nameof(GetProjectTeamSelfie), new { id = selfie.Id }, selfie);
         }
 
+        // PUT: api/TeamSelfies/{id}
+        // Updates an existing team selfie in the database
         [HttpPut("{id}")]
         public async Task<IActionResult> PutProjectTeamSelfie(int id, [FromForm] TeamSelfieUploadDto selfieDto)
         {
@@ -95,7 +104,7 @@ namespace Mock.Controllers
             {
                 if (selfieDto.TeamImage != null)
                 {
-                    selfie.TeamImageUrl = await _fileService.UploadFileAsync(selfieDto.TeamImage, "Photos/TeamSelfie");
+                    selfie.TeamImageUrl = await _fileService.UploadFileAsync(selfieDto.TeamImage, "/Photos/TeamSelfie");
                 }
 
                 _context.Entry(selfie).State = EntityState.Modified;
@@ -111,7 +120,8 @@ namespace Mock.Controllers
             return NoContent();
         }
 
-
+        // DELETE: api/TeamSelfies/{id}
+        // Deletes a team selfie from the database by ID
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteProjectTeamSelfie(int id)
         {
@@ -127,6 +137,7 @@ namespace Mock.Controllers
             return NoContent();
         }
 
+        // Checks if a team selfie exists in the database by ID
         private bool TeamSelfieExists(int id)
         {
             return _context.TeamSelfies.Any(e => e.Id == id);

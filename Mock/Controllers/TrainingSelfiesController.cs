@@ -15,18 +15,23 @@ namespace Mock.Controllers
         private readonly ApplicationDbContext _context;
         private readonly IFileService _fileService;
 
+        // Constructor to initialize the TrainingSelfiesController with database context and file service
         public TrainingSelfiesController(ApplicationDbContext context, IFileService fileService)
         {
             _context = context;
             _fileService = fileService;
         }
 
+        // GET: api/TrainingSelfies
+        // Retrieves a list of all training selfies from the database
         [HttpGet]
         public async Task<ActionResult<IEnumerable<TrainingselfieModel>>> GetTrainingFriendsSelfies()
         {
             return await _context.TrainingSelfies.ToListAsync();
         }
 
+        // GET: api/TrainingSelfies/{id}
+        // Retrieves a specific training selfie by ID
         [HttpGet("{id}")]
         public async Task<ActionResult<TrainingselfieModel>> GetTrainingFriendsSelfie(int id)
         {
@@ -40,6 +45,8 @@ namespace Mock.Controllers
             return selfie;
         }
 
+        // POST: api/TrainingSelfies
+        // Adds a new training selfie to the database
         [HttpPost]
         public async Task<ActionResult<TrainingselfieModel>> PostTrainingFriendsSelfie([FromForm] TrainingSelfieUploadDto selfieDto)
         {
@@ -64,6 +71,8 @@ namespace Mock.Controllers
             return CreatedAtAction(nameof(GetTrainingFriendsSelfie), new { id = selfie.Id }, selfie);
         }
 
+        // PUT: api/TrainingSelfies/{id}
+        // Updates an existing training selfie in the database
         [HttpPut("{id}")]
         public async Task<IActionResult> PutTrainingFriendsSelfie(int id, [FromForm] TrainingSelfieUploadDto selfieDto)
         {
@@ -107,6 +116,8 @@ namespace Mock.Controllers
             return NoContent();
         }
 
+        // DELETE: api/TrainingSelfies/{id}
+        // Deletes a training selfie from the database by ID
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteTrainingFriendsSelfie(int id)
         {
@@ -122,6 +133,7 @@ namespace Mock.Controllers
             return NoContent();
         }
 
+        // Checks if a training selfie exists in the database by ID
         private bool TrainingSelfieExists(int id)
         {
             return _context.TrainingSelfies.Any(e => e.Id == id);

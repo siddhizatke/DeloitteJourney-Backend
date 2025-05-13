@@ -1,57 +1,50 @@
-﻿using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
-using System;
-using System.IO;
-using System.Threading.Tasks;
+﻿using Mock.Repository;
 
-namespace Mock.Repository
+public class FileService : IFileService
 {
-    public class FileService : IFileService
-    {
-        private readonly IWebHostEnvironment _environment;
-        private readonly ILogger<FileService> _logger;
+    private readonly IWebHostEnvironment _environment;
+    private readonly ILogger<FileService> _logger;
 
-        public FileService(IWebHostEnvironment environment, ILogger<FileService> logger)
+    // Constructor to initialize environment and logger dependencies
+    public FileService(IWebHostEnvironment environment, ILogger<FileService> logger)
+    {
+        _environment = environment;
+        _logger = logger;
+    }
+
+    // Uploads a file to the specified folder and returns its relative path
+    public async Task<string> UploadFileAsync(IFormFile file, string folderName)
+    {
+        if (file == null || string.IsNullOrEmpty(folderName))
         {
-            _environment = environment;
-            _logger = logger;
+            _logger.LogError("File or folder cannot be null");
+            throw new ArgumentNullException(nameof(file), "File or folder cannot be null");
         }
 
-        public async Task<string> UploadFileAsync(IFormFile file, string folderName)
+        try
         {
-            if (file == null || string.IsNullOrEmpty(folderName))
+            var uploadsFolderPath = Path.Combine(_environment.ContentRootPath, folderName);
+            if (!Directory.Exists(uploadsFolderPath))
             {
-                _logger.LogError("File or folder cannot be null");
-                throw new ArgumentNullException(nameof(file), "File or folder cannot be null");
+                Directory.CreateDirectory(uploadsFolderPath);
             }
 
-            try
+            var uniqueFileName = Guid.NewGuid().ToString() + "_" + Path.GetFileName(file.FileName);
+            var filePath = Path.Combine(uploadsFolderPath, uniqueFileName);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
             {
-                // Adjust the path to reference the 'photos/teamselfie' directory
-                var uploadsFolderPath = Path.Combine(_environment.ContentRootPath, "Photos");
-                if (!Directory.Exists(uploadsFolderPath))
-                {
-                    Directory.CreateDirectory(uploadsFolderPath);
-                }
-
-                // Use original file name without GUID
-                var fileName = Path.GetFileName(file.FileName);
-                var filePath = Path.Combine(uploadsFolderPath, fileName);
-
-                using (var stream = new FileStream(filePath, FileMode.Create))
-                {
-                    await file.CopyToAsync(stream);
-                }
-
-                _logger.LogInformation($"File uploaded successfully: {filePath}");
-                return $"{fileName}"; // Return relative path
+                await file.CopyToAsync(stream);
             }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error uploading file");
-                throw; // Re-throw the exception after logging it
-            }
+
+            _logger.LogInformation($"File uploaded successfully: {filePath}");
+
+            return $"/{folderName}/{uniqueFileName}".Replace("\\", "/");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error uploading file");
+            throw;
         }
     }
 }

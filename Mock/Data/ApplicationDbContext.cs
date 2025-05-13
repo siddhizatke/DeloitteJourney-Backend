@@ -11,17 +11,7 @@ namespace Mock.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-
-            modelBuilder.Entity<UserModel>().HasData(
-              new UserModel
-                {
-                  Id = 1,
-                  Name = "Siddhi Zatke",
-                 AboutMe = "A passionate developer.",
-                 AboutMeFormal= "A passionate developer with a keen interest in software development and technology.",
-                  ProfilePictureUrl = "\"C:\\Users\\szatke\\Pictures\\New Photo.jpg\"",
-                // PhotosUrl = new List<string> { "\"C:\\Users\\szatke\\Pictures\\New Photo.jpg\"", "\"C:\\Users\\szatke\\Pictures\\photo.jpg\"" }
-                 });
+              
         }
      
 

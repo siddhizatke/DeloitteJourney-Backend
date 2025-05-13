@@ -5,7 +5,6 @@ using Mock.Data;
 using Mock.Model;
 using Mock.Repository;
 
-
 namespace Mock.Controllers
 {
     [Route("api/[controller]")]
@@ -15,18 +14,23 @@ namespace Mock.Controllers
         private readonly ApplicationDbContext _context;
         private readonly IFileService _fileService;
 
+        // Constructor to initialize the UserController with database context and file service
         public UserController(ApplicationDbContext context, IFileService fileService)
         {
             _context = context;
             _fileService = fileService;
         }
 
+        // GET: api/User
+        // Retrieves a list of all users from the database
         [HttpGet]
         public async Task<ActionResult<IEnumerable<UserModel>>> GetUsers()
         {
             return await _context.Users.ToListAsync();
         }
 
+        // GET: api/User/{id}
+        // Retrieves a specific user by ID
         [HttpGet("{id}")]
         public async Task<ActionResult<UserModel>> GetUser(int id)
         {
@@ -40,6 +44,8 @@ namespace Mock.Controllers
             return user;
         }
 
+        // POST: api/User
+        // Adds a new user to the database
         [HttpPost]
         public async Task<ActionResult<UserModel>> PostUser([FromForm] UserUploadDto userDto)
         {
@@ -47,9 +53,8 @@ namespace Mock.Controllers
             {
                 Name = userDto.Name,
                 AboutMe = userDto.AboutMe,
-                AboutMeFormal= userDto.AboutMeFormal,
+                AboutMeFormal = userDto.AboutMeFormal,
                 ProfilePictureUrl = string.Empty, // Initialize required property
-                //PhotosUrl = new List<string>()    // Initialize required property
             };
 
             if (userDto.ProfilePicture != null)
@@ -57,24 +62,14 @@ namespace Mock.Controllers
                 user.ProfilePictureUrl = await _fileService.UploadFileAsync(userDto.ProfilePicture, "Photos");
             }
 
-            //if (userDto.Photos != null && userDto.Photos.Count > 0)
-            //{
-            //    foreach (var photo in userDto.Photos)
-            //    {
-            //        if (photo != null) // Ensure photo is not null
-            //        {
-            //            var photoUrl = await _fileService.UploadFileAsync(photo, "Photos");
-            //            user.PhotosUrl.Add(photoUrl);
-            //        }
-            //    }
-            //}
-
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction(nameof(GetUser), new { id = user.Id }, user);
         }
 
+        // PUT: api/User/{id}
+        // Updates an existing user in the database
         [HttpPut("{id}")]
         public async Task<IActionResult> PutUser(int id, [FromForm] UserUploadDto userDto)
         {
@@ -103,16 +98,6 @@ namespace Mock.Controllers
                 user.ProfilePictureUrl = await _fileService.UploadFileAsync(userDto.ProfilePicture, "Photos");
             }
 
-            //if (userDto.Photos != null && userDto.Photos.Count > 0)
-            //{
-            //    user.PhotosUrl = new List<string>();
-            //    foreach (var photo in userDto.Photos)
-            //    {
-            //        var photoUrl = await _fileService.UploadFileAsync(photo, "Photos");
-            //        user.PhotosUrl.Add(photoUrl);
-            //    }
-            //}
-
             _context.Entry(user).State = EntityState.Modified;
 
             try
@@ -134,6 +119,8 @@ namespace Mock.Controllers
             return NoContent();
         }
 
+        // DELETE: api/User/{id}
+        // Deletes a user from the database by ID
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(int id)
         {
@@ -149,10 +136,10 @@ namespace Mock.Controllers
             return NoContent();
         }
 
+        // Checks if a user exists in the database by ID
         private bool UserExists(int id)
         {
             return _context.Users.Any(e => e.Id == id);
         }
-
     }
 }

@@ -11,7 +11,7 @@ namespace Mock.Model
         public required string AboutMeFormal { get; set; }
         [BindNever]
         public required string ProfilePictureUrl { get; set; }
-       // public  List<string> PhotosUrl { get; set; }
+   
 
     }
     public class UserUploadDto
@@ -21,7 +21,7 @@ namespace Mock.Model
         public required string AboutMe { get; set; }
         public required string AboutMeFormal { get; set; }
         public required IFormFile ProfilePicture { get; set; }
-        //public  List<IFormFile> Photos { get; set; }
+
     }
 
     public class UserPhoto
