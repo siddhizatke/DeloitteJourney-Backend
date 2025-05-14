@@ -104,7 +104,7 @@ namespace Mock.Controllers
             {
                 if (selfieDto.TeamImage != null)
                 {
-                    selfie.TeamImageUrl = await _fileService.UploadFileAsync(selfieDto.TeamImage, "/Photos/TeamSelfie");
+                    selfie.TeamImageUrl = await _fileService.UploadFileAsync(selfieDto.TeamImage, "Photos/TeamSelfie");
                 }
 
                 _context.Entry(selfie).State = EntityState.Modified;

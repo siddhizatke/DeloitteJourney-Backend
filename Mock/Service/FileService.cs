@@ -39,7 +39,7 @@ public class FileService : IFileService
 
             _logger.LogInformation($"File uploaded successfully: {filePath}");
 
-            return $"/{folderName}/{uniqueFileName}".Replace("\\", "/");
+            return $"{folderName}/{uniqueFileName}".Replace("\\", "/");
         }
         catch (Exception ex)
         {
