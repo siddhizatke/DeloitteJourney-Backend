@@ -14,7 +14,7 @@ namespace Mock.Controllers
         private readonly ApplicationDbContext _context;
         private readonly IFileService _fileService;
 
-        // Constructor to initialize the UserController with database context and file service
+        // Constructor 
         public UserController(ApplicationDbContext context, IFileService fileService)
         {
             _context = context;
@@ -22,7 +22,6 @@ namespace Mock.Controllers
         }
 
         // GET: api/User
-        // Retrieves a list of all users from the database
         [HttpGet]
         public async Task<ActionResult<IEnumerable<UserModel>>> GetUsers()
         {
@@ -30,7 +29,6 @@ namespace Mock.Controllers
         }
 
         // GET: api/User/{id}
-        // Retrieves a specific user by ID
         [HttpGet("{id}")]
         public async Task<ActionResult<UserModel>> GetUser(int id)
         {
@@ -45,11 +43,9 @@ namespace Mock.Controllers
         }
 
         // POST: api/User
-        // Adds a new user to the database
         [HttpPost]
         public async Task<ActionResult<UserModel>> PostUser([FromForm] UserUploadDto userDto)
         {
-            // Fix for CS9035: Ensure 'ProfilePictureUrl' is set in the object initializer
             var user = new UserModel
             {
                 Name = userDto.Name,
@@ -76,7 +72,6 @@ namespace Mock.Controllers
         }
 
         // PUT: api/User/{id}
-        // Updates an existing user in the database
         [HttpPut("{id}")]
         public async Task<IActionResult> PutUser(int id, [FromForm] UserUploadDto userDto)
         {
@@ -113,7 +108,6 @@ namespace Mock.Controllers
 
 
         // DELETE: api/User/{id}
-        // Deletes a user from the database by ID
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(int id)
         {

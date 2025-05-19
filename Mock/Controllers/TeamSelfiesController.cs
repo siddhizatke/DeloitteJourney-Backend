@@ -61,7 +61,7 @@ namespace Mock.Controllers
                 }
             }
 
-            selfie.Id = 0; // Ensure the Id is not set to avoid explicit identity insert
+            selfie.Id = 0;
 
             try
             {
@@ -70,7 +70,6 @@ namespace Mock.Controllers
             }
             catch (Exception ex)
             {
-                // Log the exception
                 Console.WriteLine(ex.Message);
                 throw;
             }

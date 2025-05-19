@@ -1,11 +1,12 @@
 ﻿using Mock.Repository;
 
+//This file is no longer needed as the images uploaded are not in base64 string format.
 public class FileService : IFileService
 {
     private readonly IWebHostEnvironment _environment;
     private readonly ILogger<FileService> _logger;
 
-    // Constructor to initialize environment and logger dependencies
+    // Constructor 
     public FileService(IWebHostEnvironment environment, ILogger<FileService> logger)
     {
         _environment = environment;

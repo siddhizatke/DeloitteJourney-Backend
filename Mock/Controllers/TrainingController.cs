@@ -12,14 +12,13 @@ namespace Mock.Controllers
     {
         private readonly ApplicationDbContext _context;
 
-        // Constructor to initialize the TrainingController with database context
+        // Constructor 
         public TrainingController(ApplicationDbContext context)
         {
             _context = context;
         }
 
         // GET: api/Training
-        // Retrieves a list of all training activities from the database
         [HttpGet]
         public async Task<IActionResult> GetTrainingActivities()
         {
@@ -28,7 +27,6 @@ namespace Mock.Controllers
         }
 
         // GET: api/Training/{id}
-        // Retrieves a specific training activity by ID
         [HttpGet("{id}")]
         public async Task<IActionResult> GetTrainingActivity(int id)
         {
@@ -43,7 +41,6 @@ namespace Mock.Controllers
         }
 
         // POST: api/Training
-        // Adds a new training activity to the database
         [HttpPost]
         public async Task<IActionResult> PostTrainingActivity([FromBody] TrainingActivityModel trainingActivity)
         {
@@ -51,8 +48,6 @@ namespace Mock.Controllers
             {
                 return BadRequest();
             }
-
-            // Ensure Id is not set
             trainingActivity.Id = 0;
 
             _context.TrainingActivities.Add(trainingActivity);
@@ -62,7 +57,6 @@ namespace Mock.Controllers
         }
 
         // DELETE: api/Training/{id}
-        // Deletes a training activity from the database by ID
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(int id)
         {

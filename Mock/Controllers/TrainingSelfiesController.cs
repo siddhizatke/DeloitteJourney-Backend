@@ -60,7 +60,7 @@ namespace Mock.Controllers
                 }
             }
 
-            selfie.Id = 0; // Ensure the Id is not set to avoid explicit identity insert
+            selfie.Id = 0;
 
             _context.TrainingSelfies.Add(selfie);
             await _context.SaveChangesAsync();
