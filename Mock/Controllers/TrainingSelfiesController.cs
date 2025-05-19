@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Mock.Data;
 using Mock.Model;
-using Mock.Repository;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Mock.Controllers
@@ -13,17 +15,13 @@ namespace Mock.Controllers
     public class TrainingSelfiesController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
-        private readonly IFileService _fileService;
 
-        // Constructor to initialize the TrainingSelfiesController with database context and file service
-        public TrainingSelfiesController(ApplicationDbContext context, IFileService fileService)
+        public TrainingSelfiesController(ApplicationDbContext context)
         {
             _context = context;
-            _fileService = fileService;
         }
 
         // GET: api/TrainingSelfies
-        // Retrieves a list of all training selfies from the database
         [HttpGet]
         public async Task<ActionResult<IEnumerable<TrainingselfieModel>>> GetTrainingFriendsSelfies()
         {
@@ -31,39 +29,38 @@ namespace Mock.Controllers
         }
 
         // GET: api/TrainingSelfies/{id}
-        // Retrieves a specific training selfie by ID
         [HttpGet("{id}")]
         public async Task<ActionResult<TrainingselfieModel>> GetTrainingFriendsSelfie(int id)
         {
             var selfie = await _context.TrainingSelfies.FindAsync(id);
-
             if (selfie == null)
             {
                 return NotFound();
             }
-
             return selfie;
         }
 
         // POST: api/TrainingSelfies
-        // Adds a new training selfie to the database
         [HttpPost]
         public async Task<ActionResult<TrainingselfieModel>> PostTrainingFriendsSelfie([FromForm] TrainingSelfieUploadDto selfieDto)
         {
             var selfie = new TrainingselfieModel
             {
                 TrainingDescription = selfieDto.TrainingDescription,
-                TrainingImageUrl = string.Empty // Initialize required property
+                TrainingImageBase64 = string.Empty // Initialize required property
             };
 
             if (selfieDto.TrainingImage != null)
             {
-                // Upload the file and set the URL internally
-                selfie.TrainingImageUrl = await _fileService.UploadFileAsync(selfieDto.TrainingImage, "Photos/TrainingSelfie");
+                using (var ms = new MemoryStream())
+                {
+                    await selfieDto.TrainingImage.CopyToAsync(ms);
+                    var fileBytes = ms.ToArray();
+                    selfie.TrainingImageBase64 = Convert.ToBase64String(fileBytes);
+                }
             }
 
-            // Ensure the Id is not set to avoid explicit identity insert
-            selfie.Id = 0;
+            selfie.Id = 0; // Ensure the Id is not set to avoid explicit identity insert
 
             _context.TrainingSelfies.Add(selfie);
             await _context.SaveChangesAsync();
@@ -72,52 +69,36 @@ namespace Mock.Controllers
         }
 
         // PUT: api/TrainingSelfies/{id}
-        // Updates an existing training selfie in the database
         [HttpPut("{id}")]
         public async Task<IActionResult> PutTrainingFriendsSelfie(int id, [FromForm] TrainingSelfieUploadDto selfieDto)
         {
             if (id != selfieDto.Id)
-            {
                 return BadRequest();
-            }
 
             var selfie = await _context.TrainingSelfies.FindAsync(id);
             if (selfie == null)
-            {
                 return NotFound();
-            }
 
             selfie.TrainingDescription = selfieDto.TrainingDescription;
 
             if (selfieDto.TrainingImage != null)
             {
-                // Upload the file and set the URL internally
-                selfie.TrainingImageUrl = await _fileService.UploadFileAsync(selfieDto.TrainingImage, "Photos/TrainingSelfie");
+                using (var ms = new MemoryStream())
+                {
+                    await selfieDto.TrainingImage.CopyToAsync(ms);
+                    var fileBytes = ms.ToArray();
+                    selfie.TrainingImageBase64 = Convert.ToBase64String(fileBytes);
+                }
             }
 
             _context.Entry(selfie).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!TrainingSelfieExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+            await _context.SaveChangesAsync();
 
             return NoContent();
         }
 
+
         // DELETE: api/TrainingSelfies/{id}
-        // Deletes a training selfie from the database by ID
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteTrainingFriendsSelfie(int id)
         {
@@ -133,7 +114,6 @@ namespace Mock.Controllers
             return NoContent();
         }
 
-        // Checks if a training selfie exists in the database by ID
         private bool TrainingSelfieExists(int id)
         {
             return _context.TrainingSelfies.Any(e => e.Id == id);

@@ -9,9 +9,8 @@ namespace Mock.Model
         public required string Name { get; set; }
         public required string AboutMe { get; set; }
         public required string AboutMeFormal { get; set; }
-        [BindNever]
-        public required string ProfilePictureUrl { get; set; }
-   
+        public string? ProfilePictureBase64 { get; set; }
+
 
     }
     public class UserUploadDto
@@ -20,7 +19,7 @@ namespace Mock.Model
         public required string Name { get; set; }
         public required string AboutMe { get; set; }
         public required string AboutMeFormal { get; set; }
-        public required IFormFile ProfilePicture { get; set; }
+        public IFormFile? ProfilePicture { get; set; }
 
     }
 
@@ -28,12 +27,12 @@ namespace Mock.Model
     {
         [Key]
         public int PhotoId { get; set; }
-        public required string PhotoUrl { get; set; }
+        public  string? PhotoBase64 { get; set; }
     }
     public class UserPhotoDto
     {
         [Key]
         public int PhotoId { get; set; }
-        public required IFormFile PhotoUrl { get; set; }
+        public required IFormFile PhotoFile { get; set; }
     }
 }

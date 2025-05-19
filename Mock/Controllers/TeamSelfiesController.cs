@@ -3,9 +3,10 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Mock.Data;
 using Mock.Model;
-using Mock.Repository;
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Mock.Controllers
@@ -15,17 +16,13 @@ namespace Mock.Controllers
     public class TeamSelfiesController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
-        private readonly IFileService _fileService;
 
-        // Constructor to initialize the TeamSelfiesController with database context and file service
-        public TeamSelfiesController(ApplicationDbContext context, IFileService fileService)
+        public TeamSelfiesController(ApplicationDbContext context)
         {
             _context = context;
-            _fileService = fileService;
         }
 
         // GET: api/TeamSelfies
-        // Retrieves a list of all team selfies from the database
         [HttpGet]
         public async Task<ActionResult<IEnumerable<TeamSelfiesModel>>> GetProjectTeamSelfies()
         {
@@ -33,39 +30,38 @@ namespace Mock.Controllers
         }
 
         // GET: api/TeamSelfies/{id}
-        // Retrieves a specific team selfie by ID
         [HttpGet("{id}")]
         public async Task<ActionResult<TeamSelfiesModel>> GetProjectTeamSelfie(int id)
         {
             var selfie = await _context.TeamSelfies.FindAsync(id);
-
             if (selfie == null)
             {
                 return NotFound();
             }
-
             return selfie;
         }
 
         // POST: api/TeamSelfies
-        // Adds a new team selfie to the database
         [HttpPost]
         public async Task<ActionResult<TeamSelfiesModel>> PostProjectTeamSelfie([FromForm] TeamSelfieUploadDto selfieDto)
         {
             var selfie = new TeamSelfiesModel
             {
                 TeamselfieDescription = selfieDto.TeamDescription,
-                TeamImageUrl = string.Empty // Initialize required property
+                TeamImageBase64 = string.Empty // Initialize required property
             };
 
             if (selfieDto.TeamImage != null)
             {
-                // Upload the file and set the URL internally
-                selfie.TeamImageUrl = await _fileService.UploadFileAsync(selfieDto.TeamImage, "Photos/TeamSelfie");
+                using (var ms = new MemoryStream())
+                {
+                    await selfieDto.TeamImage.CopyToAsync(ms);
+                    var fileBytes = ms.ToArray();
+                    selfie.TeamImageBase64 = Convert.ToBase64String(fileBytes);
+                }
             }
 
-            // Ensure the Id is not set to avoid explicit identity insert
-            selfie.Id = 0;
+            selfie.Id = 0; // Ensure the Id is not set to avoid explicit identity insert
 
             try
             {
@@ -83,7 +79,6 @@ namespace Mock.Controllers
         }
 
         // PUT: api/TeamSelfies/{id}
-        // Updates an existing team selfie in the database
         [HttpPut("{id}")]
         public async Task<IActionResult> PutProjectTeamSelfie(int id, [FromForm] TeamSelfieUploadDto selfieDto)
         {
@@ -100,28 +95,24 @@ namespace Mock.Controllers
 
             selfie.TeamselfieDescription = selfieDto.TeamDescription;
 
-            try
+            if (selfieDto.TeamImage != null)
             {
-                if (selfieDto.TeamImage != null)
+                using (var ms = new MemoryStream())
                 {
-                    selfie.TeamImageUrl = await _fileService.UploadFileAsync(selfieDto.TeamImage, "Photos/TeamSelfie");
+                    await selfieDto.TeamImage.CopyToAsync(ms);
+                    var fileBytes = ms.ToArray();
+                    selfie.TeamImageBase64 = "data:image/jpeg;base64," + Convert.ToBase64String(fileBytes);
                 }
+            }
 
-                _context.Entry(selfie).State = EntityState.Modified;
-                await _context.SaveChangesAsync();
-            }
-            catch (Exception ex)
-            {
-                // Log the exception
-                Console.WriteLine("Error updating team selfie: " + ex.Message);
-                return StatusCode(500, "Internal server error");
-            }
+            _context.Entry(selfie).State = EntityState.Modified;
+            await _context.SaveChangesAsync();
 
             return NoContent();
         }
 
+
         // DELETE: api/TeamSelfies/{id}
-        // Deletes a team selfie from the database by ID
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteProjectTeamSelfie(int id)
         {

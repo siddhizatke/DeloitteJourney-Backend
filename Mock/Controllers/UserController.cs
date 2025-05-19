@@ -49,17 +49,24 @@ namespace Mock.Controllers
         [HttpPost]
         public async Task<ActionResult<UserModel>> PostUser([FromForm] UserUploadDto userDto)
         {
+            // Fix for CS9035: Ensure 'ProfilePictureUrl' is set in the object initializer
             var user = new UserModel
             {
                 Name = userDto.Name,
                 AboutMe = userDto.AboutMe,
                 AboutMeFormal = userDto.AboutMeFormal,
-                ProfilePictureUrl = string.Empty, // Initialize required property
+                ProfilePictureBase64 = null,
+                
             };
 
             if (userDto.ProfilePicture != null)
             {
-                user.ProfilePictureUrl = await _fileService.UploadFileAsync(userDto.ProfilePicture, "Photos");
+                using (var ms = new MemoryStream())
+                {
+                    await userDto.ProfilePicture.CopyToAsync(ms);
+                    var fileBytes = ms.ToArray();
+                    user.ProfilePictureBase64 = Convert.ToBase64String(fileBytes);
+                }
             }
 
             _context.Users.Add(user);
@@ -78,11 +85,6 @@ namespace Mock.Controllers
                 return BadRequest("User ID mismatch.");
             }
 
-            if (userDto == null)
-            {
-                return BadRequest("User data cannot be null.");
-            }
-
             var user = await _context.Users.FindAsync(id);
             if (user == null)
             {
@@ -95,29 +97,20 @@ namespace Mock.Controllers
 
             if (userDto.ProfilePicture != null)
             {
-                user.ProfilePictureUrl = await _fileService.UploadFileAsync(userDto.ProfilePicture, "Photos");
+                using (var ms = new MemoryStream())
+                {
+                    await userDto.ProfilePicture.CopyToAsync(ms);
+                    var fileBytes = ms.ToArray();
+                    user.ProfilePictureBase64 = Convert.ToBase64String(fileBytes);
+                }
             }
 
             _context.Entry(user).State = EntityState.Modified;
-
-            try
-            {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!UserExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
-            }
+            await _context.SaveChangesAsync();
 
             return NoContent();
         }
+
 
         // DELETE: api/User/{id}
         // Deletes a user from the database by ID
