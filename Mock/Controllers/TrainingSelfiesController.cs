@@ -1,12 +1,9 @@
-﻿using Microsoft.AspNetCore.Http;
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Mock.Data;
 using Mock.Model;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
+
+using static Mock.Exception.ExceptionFilter;
 
 namespace Mock.Controllers
 {
@@ -21,33 +18,38 @@ namespace Mock.Controllers
             _context = context;
         }
 
-        // GET: api/TrainingSelfies
+        // Returns all training selfies.
         [HttpGet]
         public async Task<ActionResult<IEnumerable<TrainingselfieModel>>> GetTrainingFriendsSelfies()
         {
             return await _context.TrainingSelfies.ToListAsync();
         }
 
-        // GET: api/TrainingSelfies/{id}
+        // Returns a training selfie by ID.
         [HttpGet("{id}")]
         public async Task<ActionResult<TrainingselfieModel>> GetTrainingFriendsSelfie(int id)
         {
             var selfie = await _context.TrainingSelfies.FindAsync(id);
             if (selfie == null)
             {
-                return NotFound();
+                throw new NotFoundException("Training selfie Data not found");
             }
             return selfie;
         }
 
-        // POST: api/TrainingSelfies
+        // Creates a new training selfie.
         [HttpPost]
         public async Task<ActionResult<TrainingselfieModel>> PostTrainingFriendsSelfie([FromForm] TrainingSelfieUploadDto selfieDto)
         {
+            if (selfieDto == null)
+            {
+                throw new BadRequestException("Data not entered.");
+            }
+
             var selfie = new TrainingselfieModel
             {
                 TrainingDescription = selfieDto.TrainingDescription,
-                TrainingImageBase64 = string.Empty // Initialize required property
+                TrainingImageBase64 = string.Empty
             };
 
             if (selfieDto.TrainingImage != null)
@@ -59,6 +61,10 @@ namespace Mock.Controllers
                     selfie.TrainingImageBase64 = Convert.ToBase64String(fileBytes);
                 }
             }
+            else
+            {
+                throw new BadRequestException("TrainingImage is required.");
+            }
 
             selfie.Id = 0;
 
@@ -68,16 +74,25 @@ namespace Mock.Controllers
             return CreatedAtAction(nameof(GetTrainingFriendsSelfie), new { id = selfie.Id }, selfie);
         }
 
-        // PUT: api/TrainingSelfies/{id}
+        // Updates an existing training selfie.
         [HttpPut("{id}")]
         public async Task<IActionResult> PutTrainingFriendsSelfie(int id, [FromForm] TrainingSelfieUploadDto selfieDto)
         {
+            if (selfieDto == null)
+            {
+                throw new BadRequestException("Data not entered.");
+            }
+
             if (id != selfieDto.Id)
-                return BadRequest();
+            {
+                throw new BadRequestException("ID mismatch");
+            }
 
             var selfie = await _context.TrainingSelfies.FindAsync(id);
             if (selfie == null)
-                return NotFound();
+            {
+                throw new NotFoundException("Training selfie Data not found");
+            }
 
             selfie.TrainingDescription = selfieDto.TrainingDescription;
 
@@ -90,6 +105,10 @@ namespace Mock.Controllers
                     selfie.TrainingImageBase64 = Convert.ToBase64String(fileBytes);
                 }
             }
+            else
+            {
+                throw new BadRequestException("TrainingImage is required.");
+            }
 
             _context.Entry(selfie).State = EntityState.Modified;
             await _context.SaveChangesAsync();
@@ -97,15 +116,14 @@ namespace Mock.Controllers
             return NoContent();
         }
 
-
-        // DELETE: api/TrainingSelfies/{id}
+        // Deletes a training selfie by ID.
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteTrainingFriendsSelfie(int id)
         {
             var selfie = await _context.TrainingSelfies.FindAsync(id);
             if (selfie == null)
             {
-                return NotFound();
+                throw new NotFoundException("Training selfie Data not found");
             }
 
             _context.TrainingSelfies.Remove(selfie);
@@ -114,6 +132,7 @@ namespace Mock.Controllers
             return NoContent();
         }
 
+        // Checks if a training selfie exists by ID.
         private bool TrainingSelfieExists(int id)
         {
             return _context.TrainingSelfies.Any(e => e.Id == id);

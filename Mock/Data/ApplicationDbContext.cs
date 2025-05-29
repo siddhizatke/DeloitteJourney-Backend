@@ -14,7 +14,7 @@ namespace Mock.Data
               
         }
      
-
+        public DbSet<LoginModel> Login { get; set; }
         public DbSet<UserModel> Users { get; set; }
         public DbSet<TrainingActivityModel> TrainingActivities { get; set; }
         public DbSet<TeamSelfiesModel> TeamSelfies { get; set; }

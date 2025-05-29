@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Mock.Data;
 using Mock.Model;
+using System.Threading.Tasks;
+using static Mock.Exception.ExceptionFilter;
 
 namespace Mock.Controllers
 {
@@ -12,21 +14,19 @@ namespace Mock.Controllers
     {
         private readonly ApplicationDbContext _context;
 
-        // Constructor 
         public TrainingController(ApplicationDbContext context)
         {
             _context = context;
         }
 
-        // GET: api/Training
+        // Returns all training activities.
         [HttpGet]
         public async Task<IActionResult> GetTrainingActivities()
         {
-            var activities = await _context.TrainingActivities.ToListAsync();
-            return Ok(activities);
+            return Ok(await _context.TrainingActivities.ToListAsync());
         }
 
-        // GET: api/Training/{id}
+        // Returns a training activity by ID.
         [HttpGet("{id}")]
         public async Task<IActionResult> GetTrainingActivity(int id)
         {
@@ -34,19 +34,19 @@ namespace Mock.Controllers
 
             if (trainingActivity == null)
             {
-                return NotFound();
+                throw new NotFoundException("Training activity data not found");
             }
 
             return Ok(trainingActivity);
         }
 
-        // POST: api/Training
+        // Creates a new training activity.
         [HttpPost]
         public async Task<IActionResult> PostTrainingActivity([FromBody] TrainingActivityModel trainingActivity)
         {
             if (trainingActivity == null)
             {
-                return BadRequest();
+                throw new BadRequestException("Data not entered.");
             }
             trainingActivity.Id = 0;
 
@@ -56,14 +56,14 @@ namespace Mock.Controllers
             return CreatedAtAction(nameof(GetTrainingActivity), new { id = trainingActivity.Id }, trainingActivity);
         }
 
-        // DELETE: api/Training/{id}
+        // Deletes a training activity by ID.
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(int id)
         {
             var activities = await _context.TrainingActivities.FindAsync(id);
             if (activities == null)
             {
-                return NotFound();
+                throw new NotFoundException("Training activity data not found");
             }
 
             _context.TrainingActivities.Remove(activities);

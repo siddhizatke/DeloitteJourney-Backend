@@ -4,6 +4,11 @@ using Microsoft.EntityFrameworkCore;
 using Mock.Data;
 using Mock.Model;
 using Mock.Repository;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+using static Mock.Exception.ExceptionFilter;
 
 namespace Mock.Controllers
 {
@@ -14,21 +19,20 @@ namespace Mock.Controllers
         private readonly ApplicationDbContext _context;
         private readonly IFileService _fileService;
 
-        // Constructor 
         public UserController(ApplicationDbContext context, IFileService fileService)
         {
             _context = context;
             _fileService = fileService;
         }
 
-        // GET: api/User
+        // Returns all users.
         [HttpGet]
         public async Task<ActionResult<IEnumerable<UserModel>>> GetUsers()
         {
             return await _context.Users.ToListAsync();
         }
 
-        // GET: api/User/{id}
+        // Returns a user by ID.
         [HttpGet("{id}")]
         public async Task<ActionResult<UserModel>> GetUser(int id)
         {
@@ -36,23 +40,27 @@ namespace Mock.Controllers
 
             if (user == null)
             {
-                return NotFound();
+                throw new NotFoundException("User data not found");
             }
 
             return user;
         }
 
-        // POST: api/User
+        // Creates a new user.
         [HttpPost]
         public async Task<ActionResult<UserModel>> PostUser([FromForm] UserUploadDto userDto)
         {
+            if (userDto == null)
+            {
+                throw new BadRequestException("Data not entered.");
+            }
+
             var user = new UserModel
             {
                 Name = userDto.Name,
                 AboutMe = userDto.AboutMe,
                 AboutMeFormal = userDto.AboutMeFormal,
                 ProfilePictureBase64 = null,
-                
             };
 
             if (userDto.ProfilePicture != null)
@@ -64,6 +72,10 @@ namespace Mock.Controllers
                     user.ProfilePictureBase64 = Convert.ToBase64String(fileBytes);
                 }
             }
+            else
+            {
+                throw new BadRequestException("ProfilePicture is required.");
+            }
 
             _context.Users.Add(user);
             await _context.SaveChangesAsync();
@@ -71,19 +83,24 @@ namespace Mock.Controllers
             return CreatedAtAction(nameof(GetUser), new { id = user.Id }, user);
         }
 
-        // PUT: api/User/{id}
+        // Updates an existing user.
         [HttpPut("{id}")]
         public async Task<IActionResult> PutUser(int id, [FromForm] UserUploadDto userDto)
         {
+            if (userDto == null)
+            {
+                throw new BadRequestException("Data not entered.");
+            }
+
             if (id != userDto.Id)
             {
-                return BadRequest("User ID mismatch.");
+                throw new BadRequestException("User ID mismatch.");
             }
 
             var user = await _context.Users.FindAsync(id);
             if (user == null)
             {
-                return NotFound();
+                throw new NotFoundException("User data not found");
             }
 
             user.Name = userDto.Name;
@@ -99,6 +116,10 @@ namespace Mock.Controllers
                     user.ProfilePictureBase64 = Convert.ToBase64String(fileBytes);
                 }
             }
+            else
+            {
+                throw new BadRequestException("ProfilePicture is required.");
+            }
 
             _context.Entry(user).State = EntityState.Modified;
             await _context.SaveChangesAsync();
@@ -106,15 +127,14 @@ namespace Mock.Controllers
             return NoContent();
         }
 
-
-        // DELETE: api/User/{id}
+        // Deletes a user by ID.
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteUser(int id)
         {
             var user = await _context.Users.FindAsync(id);
             if (user == null)
             {
-                return NotFound();
+                throw new NotFoundException("User data not found");
             }
 
             _context.Users.Remove(user);
@@ -123,7 +143,7 @@ namespace Mock.Controllers
             return NoContent();
         }
 
-        // Checks if a user exists in the database by ID
+        // Checks if a user exists by ID.
         private bool UserExists(int id)
         {
             return _context.Users.Any(e => e.Id == id);

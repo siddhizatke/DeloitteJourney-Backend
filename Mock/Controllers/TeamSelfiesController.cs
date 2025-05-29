@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
+using static Mock.Exception.ExceptionFilter;
 
 namespace Mock.Controllers
 {
@@ -22,33 +23,33 @@ namespace Mock.Controllers
             _context = context;
         }
 
-        // GET: api/TeamSelfies
+        // Returns all team selfies.
         [HttpGet]
         public async Task<ActionResult<IEnumerable<TeamSelfiesModel>>> GetProjectTeamSelfies()
         {
             return await _context.TeamSelfies.ToListAsync();
         }
 
-        // GET: api/TeamSelfies/{id}
+        // Returns a team selfie by ID.
         [HttpGet("{id}")]
         public async Task<ActionResult<TeamSelfiesModel>> GetProjectTeamSelfie(int id)
         {
             var selfie = await _context.TeamSelfies.FindAsync(id);
             if (selfie == null)
             {
-                return NotFound();
+                throw new NotFoundException("Team selfie Data not found");
             }
             return selfie;
         }
 
-        // POST: api/TeamSelfies
+        // Creates a new team selfie.
         [HttpPost]
         public async Task<ActionResult<TeamSelfiesModel>> PostProjectTeamSelfie([FromForm] TeamSelfieUploadDto selfieDto)
         {
             var selfie = new TeamSelfiesModel
             {
                 TeamselfieDescription = selfieDto.TeamDescription,
-                TeamImageBase64 = string.Empty // Initialize required property
+                TeamImageBase64 = string.Empty
             };
 
             if (selfieDto.TeamImage != null)
@@ -63,33 +64,30 @@ namespace Mock.Controllers
 
             selfie.Id = 0;
 
-            try
-            {
-                _context.TeamSelfies.Add(selfie);
-                await _context.SaveChangesAsync();
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-                throw;
-            }
+            _context.TeamSelfies.Add(selfie);
+            await _context.SaveChangesAsync();
 
             return CreatedAtAction(nameof(GetProjectTeamSelfie), new { id = selfie.Id }, selfie);
         }
 
-        // PUT: api/TeamSelfies/{id}
+        // Updates an existing team selfie.
         [HttpPut("{id}")]
         public async Task<IActionResult> PutProjectTeamSelfie(int id, [FromForm] TeamSelfieUploadDto selfieDto)
         {
+            if (selfieDto == null)
+            {
+                throw new BadRequestException("Data not entered.");
+            }
+
             if (id != selfieDto.Id)
             {
-                return BadRequest("ID mismatch");
+                throw new BadRequestException("ID mismatch");
             }
 
             var selfie = await _context.TeamSelfies.FindAsync(id);
             if (selfie == null)
             {
-                return NotFound("Team selfie not found");
+                throw new NotFoundException("Team selfie Data not found");
             }
 
             selfie.TeamselfieDescription = selfieDto.TeamDescription;
@@ -103,6 +101,10 @@ namespace Mock.Controllers
                     selfie.TeamImageBase64 = "data:image/jpeg;base64," + Convert.ToBase64String(fileBytes);
                 }
             }
+            else
+            {
+                throw new BadRequestException("TeamImage is required.");
+            }
 
             _context.Entry(selfie).State = EntityState.Modified;
             await _context.SaveChangesAsync();
@@ -110,27 +112,20 @@ namespace Mock.Controllers
             return NoContent();
         }
 
-
-        // DELETE: api/TeamSelfies/{id}
+        // Deletes a team selfie by ID.
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteProjectTeamSelfie(int id)
         {
             var selfie = await _context.TeamSelfies.FindAsync(id);
             if (selfie == null)
             {
-                return NotFound();
+                throw new NotFoundException("Team selfie Data not found");
             }
 
             _context.TeamSelfies.Remove(selfie);
             await _context.SaveChangesAsync();
 
             return NoContent();
-        }
-
-        // Checks if a team selfie exists in the database by ID
-        private bool TeamSelfieExists(int id)
-        {
-            return _context.TeamSelfies.Any(e => e.Id == id);
         }
     }
 }

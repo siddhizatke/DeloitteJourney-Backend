@@ -11,7 +11,7 @@
     {
         public int Id { get; set; }
         public required string TeamDescription { get; set; }
-        public required IFormFile TeamImage { get; set; }
+        public  IFormFile? TeamImage { get; set; }
     }
 
 }

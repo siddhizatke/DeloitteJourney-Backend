@@ -2,9 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Mock.Data;
 using Mock.Model;
-using System.Collections.Generic;
-using System.IO;
-using System.Threading.Tasks;
+using static Mock.Exception.ExceptionFilter;
 
 namespace Mock.Controllers
 {
@@ -19,36 +17,37 @@ namespace Mock.Controllers
             _context = context;
         }
 
-        // GET: api/userphotos
+        // Returns a list of user photos (up to 10).
         [HttpGet]
         public async Task<ActionResult<IEnumerable<UserPhoto>>> GetPhotos()
         {
-
-            var photos = await _context.UserPhotos
-        .Select(p => new { p.PhotoId, p.PhotoBase64 })
-        .Take(10)
-        .ToListAsync();
-            return Ok(photos);
+            return Ok(await _context.UserPhotos
+                .Select(p => new { p.PhotoId, p.PhotoBase64 })
+                .Take(10)
+                .ToListAsync());
         }
 
-        // POST: api/userphotos
+        // Uploads a new user photo.
         [HttpPost]
         public async Task<ActionResult<UserPhoto>> PostPhoto([FromForm] UserPhotoDto photoDto)
         {
+            if (photoDto == null)
+            {
+                throw new BadRequestException("Data not entered.");
+            }
+
+            if (photoDto.PhotoFile == null)
+            {
+                throw new BadRequestException("PhotoFile is required.");
+            }
+
             var userPhoto = new UserPhoto();
 
-            if (photoDto.PhotoFile != null)
+            using (var ms = new MemoryStream())
             {
-                using (var ms = new MemoryStream())
-                {
-                    await photoDto.PhotoFile.CopyToAsync(ms);
-                    var fileBytes = ms.ToArray();
-                    userPhoto.PhotoBase64 = Convert.ToBase64String(fileBytes);
-                }
-            }
-            else
-            {
-                userPhoto.PhotoBase64 = string.Empty;
+                await photoDto.PhotoFile.CopyToAsync(ms);
+                var fileBytes = ms.ToArray();
+                userPhoto.PhotoBase64 = Convert.ToBase64String(fileBytes);
             }
 
             _context.UserPhotos.Add(userPhoto);
@@ -57,14 +56,14 @@ namespace Mock.Controllers
             return CreatedAtAction(nameof(GetPhotos), new { id = userPhoto.PhotoId }, userPhoto);
         }
 
-        // DELETE: api/userphotos/{photoId}
+        // Deletes a user photo by ID.
         [HttpDelete("{photoId}")]
         public async Task<IActionResult> DeletePhoto(int photoId)
         {
             var userPhoto = await _context.UserPhotos.FindAsync(photoId);
             if (userPhoto == null)
             {
-                return NotFound();
+                throw new NotFoundException("User photo not found");
             }
 
             _context.UserPhotos.Remove(userPhoto);
